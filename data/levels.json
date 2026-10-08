@@ -1,0 +1,336 @@
+{
+    "levels": [
+        {
+            "level": 1,
+            "goal": 4,
+            "speed": 280,
+            "rows": 8,
+            "cols": 8,
+            "start_row": 4,
+            "start_col": 3,
+            "snake_size": 1,
+            "start_direction": "east"
+        },
+        {
+            "level": 2,
+            "goal": 5,
+            "speed": 270,
+            "rows": 8,
+            "cols": 8,
+            "start_row": 4,
+            "start_col": 4,
+            "snake_size": 1,
+            "start_direction": "north"
+        },
+        {
+            "level": 3,
+            "goal": 6,
+            "speed": 260,
+            "rows": 9,
+            "cols": 9,
+            "start_row": 4,
+            "start_col": 4,
+            "snake_size": 1,
+            "start_direction": "west"
+        },
+        {
+            "level": 4,
+            "goal": 7,
+            "speed": 250,
+            "rows": 9,
+            "cols": 9,
+            "start_row": 4,
+            "start_col": 4,
+            "snake_size": 2,
+            "start_direction": "south"
+        },
+        {
+            "level": 5,
+            "goal": 8,
+            "speed": 240,
+            "rows": 10,
+            "cols": 10,
+            "start_row": 5,
+            "start_col": 4,
+            "snake_size": 2,
+            "start_direction": "east"
+        },
+        {
+            "level": 6,
+            "goal": 9,
+            "speed": 230,
+            "rows": 10,
+            "cols": 10,
+            "start_row": 5,
+            "start_col": 5,
+            "snake_size": 2,
+            "start_direction": "north"
+        },
+        {
+            "level": 7,
+            "goal": 10,
+            "speed": 220,
+            "rows": 11,
+            "cols": 11,
+            "start_row": 5,
+            "start_col": 5,
+            "snake_size": 2,
+            "start_direction": "west"
+        },
+        {
+            "level": 8,
+            "goal": 11,
+            "speed": 215,
+            "rows": 11,
+            "cols": 11,
+            "start_row": 5,
+            "start_col": 5,
+            "snake_size": 3,
+            "start_direction": "south"
+        },
+        {
+            "level": 9,
+            "goal": 12,
+            "speed": 205,
+            "rows": 12,
+            "cols": 12,
+            "start_row": 6,
+            "start_col": 5,
+            "snake_size": 3,
+            "start_direction": "east"
+        },
+        {
+            "level": 10,
+            "goal": 13,
+            "speed": 200,
+            "rows": 12,
+            "cols": 12,
+            "start_row": 6,
+            "start_col": 6,
+            "snake_size": 3,
+            "start_direction": "north"
+        },
+
+        {
+            "level": 11,
+            "goal": 14,
+            "speed": 190,
+            "rows": 12,
+            "cols": 12,
+            "start_row": 5,
+            "start_col": 6,
+            "snake_size": 2,
+            "start_direction": "west"
+        },
+        {
+            "level": 12,
+            "goal": 15,
+            "speed": 185,
+            "rows": 12,
+            "cols": 12,
+            "start_row": 6,
+            "start_col": 5,
+            "snake_size": 3,
+            "start_direction": "south"
+        },
+        {
+            "level": 13,
+            "goal": 16,
+            "speed": 180,
+            "rows": 11,
+            "cols": 11,
+            "start_row": 5,
+            "start_col": 5,
+            "snake_size": 3,
+            "start_direction": "east"
+        },
+        {
+            "level": 14,
+            "goal": 17,
+            "speed": 175,
+            "rows": 11,
+            "cols": 11,
+            "start_row": 6,
+            "start_col": 5,
+            "snake_size": 2,
+            "start_direction": "north"
+        },
+        {
+            "level": 15,
+            "goal": 18,
+            "speed": 165,
+            "rows": 11,
+            "cols": 11,
+            "start_row": 5,
+            "start_col": 5,
+            "snake_size": 3,
+            "start_direction": "west"
+        },
+        {
+            "level": 16,
+            "goal": 19,
+            "speed": 160,
+            "rows": 10,
+            "cols": 10,
+            "start_row": 4,
+            "start_col": 5,
+            "snake_size": 3,
+            "start_direction": "south"
+        },
+        {
+            "level": 17,
+            "goal": 20,
+            "speed": 155,
+            "rows": 10,
+            "cols": 10,
+            "start_row": 5,
+            "start_col": 4,
+            "snake_size": 2,
+            "start_direction": "east"
+        },
+        {
+            "level": 18,
+            "goal": 21,
+            "speed": 145,
+            "rows": 10,
+            "cols": 10,
+            "start_row": 5,
+            "start_col": 5,
+            "snake_size": 3,
+            "start_direction": "north"
+        },
+        {
+            "level": 19,
+            "goal": 22,
+            "speed": 135,
+            "rows": 10,
+            "cols": 10,
+            "start_row": 4,
+            "start_col": 5,
+            "snake_size": 3,
+            "start_direction": "west"
+        },
+        {
+            "level": 20,
+            "goal": 23,
+            "speed": 125,
+            "rows": 10,
+            "cols": 10,
+            "start_row": 5,
+            "start_col": 4,
+            "snake_size": 3,
+            "start_direction": "south"
+        },
+
+        {
+            "level": 21,
+            "goal": 24,
+            "speed": 120,
+            "rows": 10,
+            "cols": 10,
+            "start_row": 5,
+            "start_col": 4,
+            "snake_size": 3,
+            "start_direction": "east"
+        },
+        {
+            "level": 22,
+            "goal": 25,
+            "speed": 115,
+            "rows": 9,
+            "cols": 9,
+            "start_row": 5,
+            "start_col": 4,
+            "snake_size": 2,
+            "start_direction": "north"
+        },
+        {
+            "level": 23,
+            "goal": 26,
+            "speed": 110,
+            "rows": 9,
+            "cols": 9,
+            "start_row": 4,
+            "start_col": 4,
+            "snake_size": 3,
+            "start_direction": "west"
+        },
+        {
+            "level": 24,
+            "goal": 27,
+            "speed": 105,
+            "rows": 9,
+            "cols": 9,
+            "start_row": 4,
+            "start_col": 4,
+            "snake_size": 3,
+            "start_direction": "south"
+        },
+        {
+            "level": 25,
+            "goal": 28,
+            "speed": 100,
+            "rows": 9,
+            "cols": 9,
+            "start_row": 4,
+            "start_col": 3,
+            "snake_size": 3,
+            "start_direction": "east"
+        },
+        {
+            "level": 26,
+            "goal": 29,
+            "speed": 95,
+            "rows": 8,
+            "cols": 8,
+            "start_row": 4,
+            "start_col": 4,
+            "snake_size": 2,
+            "start_direction": "north"
+        },
+        {
+            "level": 27,
+            "goal": 30,
+            "speed": 90,
+            "rows": 8,
+            "cols": 8,
+            "start_row": 4,
+            "start_col": 4,
+            "snake_size": 3,
+            "start_direction": "west"
+        },
+        {
+            "level": 28,
+            "goal": 31,
+            "speed": 85,
+            "rows": 8,
+            "cols": 8,
+            "start_row": 3,
+            "start_col": 4,
+            "snake_size": 3,
+            "start_direction": "south"
+        },
+        {
+            "level": 29,
+            "goal": 33,
+            "speed": 80,
+            "rows": 8,
+            "cols": 8,
+            "start_row": 4,
+            "start_col": 3,
+            "snake_size": 3,
+            "start_direction": "east"
+        },
+        {
+            "level": 30,
+            "goal": 35,
+            "speed": 75,
+            "rows": 8,
+            "cols": 8,
+            "start_row": 4,
+            "start_col": 4,
+            "snake_size": 3,
+            "start_direction": "north"
+        }
+    ]
+}

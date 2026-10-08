@@ -1,0 +1,32 @@
+{
+    "controls": {
+        "up": [
+            "Up",
+            "w"
+        ],
+        "down": [
+            "Down",
+            "s"
+        ],
+        "left": [
+            "Left",
+            "a"
+        ],
+        "right": [
+            "Right",
+            "d"
+        ],
+        "faster": [
+            "Space",
+            ""
+        ],
+        "slower": [
+            "Control_L",
+            "Control_R"
+        ],
+        "restart": [
+            "r",
+            ""
+        ]
+    }
+}
