@@ -1,4 +1,5 @@
 import random
+from uib_inf100_music import (load_sound_effect,load_looping_sound,stop_all_sounds)
 from snake_view import (draw_board, draw_game_info, draw_game_background, get_board_box)
 from snake_menu import (
     draw_menu,
@@ -53,6 +54,24 @@ def app_started(app):
     # Game
     app.state = "menu"
 
+    # Sounds
+    app.apple_sound = load_sound_effect("source/sounds/eat_apple.mp3")
+    app.menu_music = load_looping_sound("source/music/fon.mp3")
+    app.coin_sound = load_sound_effect("source/sounds/coin_pickup.mp3")
+    app.hover_sound = load_sound_effect("source/sounds/hover.mp3")
+    app.click_sound = load_sound_effect("source/sounds/click.mp3")
+
+    app.apple_sound.set_volume(0.5)
+    app.coin_sound.set_volume(0.7)
+    app.hover_sound.set_volume(1.0)
+    app.click_sound.set_volume(1.0)
+
+    app.hovered_button = None
+
+    app.menu_music.set_volume(0.35)
+    app.menu_music.play()
+
+    app.current_music = app.menu_music
     # Gameover
     app.gameover_index = 0
 
@@ -222,7 +241,8 @@ def key_pressed(app, event):
             app.state = "settings"
 
         elif action == "exit":
-            app._root.destroy()
+            stop_all_sounds()
+            app._root.quit()
 
         return
 
@@ -234,6 +254,12 @@ def key_pressed(app, event):
     
     if app.state == "gameover":
         action = gameover_key_pressed(app, key)
+
+        if key == "r":
+            if app.game_mode == "arcade":
+                start_arcade(app)
+            else:
+                start_level(app)
 
         if action == "restart":
             if app.game_mode == "arcade":
@@ -321,27 +347,33 @@ def reset_progress(app):
     save_progress(app)
 
 def mouse_moved(app, event):
-    pointer = False
+    hovered_button = None
 
     if app.state == "menu":
-        pointer = menu_mouse_moved(app, event)
+        hovered_button = menu_mouse_moved(app, event)
 
     elif app.state == "levels":
-        pointer = levels_mouse_moved(app, event)
+        hovered_button = levels_mouse_moved(app, event)
 
     elif app.state == "store":
-        pointer = store_mouse_moved(app, event)
+        hovered_button = store_mouse_moved(app, event)
 
     elif app.state == "settings":
-        pointer = settings_mouse_moved(app, event)
+        hovered_button = settings_mouse_moved(app, event)
 
     elif app.state == "paused":
-        pointer = pause_mouse_moved(app, event)
+        hovered_button = pause_mouse_moved(app, event)
 
     elif app.state == "gameover":
-        pointer = gameover_mouse_moved(app, event)
+        hovered_button = gameover_mouse_moved(app, event)
 
-    if pointer:
+
+    if (hovered_button is not None and hovered_button != app.hovered_button):
+        app.hover_sound.play()
+
+    app.hovered_button = hovered_button
+
+    if hovered_button is not None:
         app._root.config(cursor="hand2")
     else:
         app._root.config(cursor="")
@@ -350,6 +382,9 @@ def mouse_pressed(app, event):
 
     if app.state == "menu":
         action = menu_mouse_pressed(app, event)
+
+        if action is not None:
+            app.click_sound.play()
 
         if action == "active":
             start_arcade(app)
@@ -364,13 +399,17 @@ def mouse_pressed(app, event):
             app.state = "settings"
 
         elif action == "exit":
-            app._root.destroy()
+            stop_all_sounds()
+            app._root.quit()
 
         return
 
 
     elif app.state == "levels":
         action = levels_mouse_pressed(app, event)
+
+        if action is not None:
+            app.click_sound.play()
 
         if action == "back":
             app.state = "menu"
@@ -387,6 +426,9 @@ def mouse_pressed(app, event):
     elif app.state == "store":
         action = store_mouse_pressed(app, event)
 
+        if action is not None:
+            app.click_sound.play()
+
         if action == "back":
             app.state = "menu"
 
@@ -395,6 +437,9 @@ def mouse_pressed(app, event):
 
     elif app.state == "settings":
         action = settings_mouse_pressed(app, event)
+
+        if action is not None:
+            app.click_sound.play()
 
         if action == "reset":
             reset_settings(app)
@@ -408,6 +453,9 @@ def mouse_pressed(app, event):
     elif app.state == "paused":
         action = pause_mouse_pressed(app, event)
 
+        if action is not None:
+            app.click_sound.play()
+
         if action == "continue":
             app.state = "active"
 
@@ -418,6 +466,9 @@ def mouse_pressed(app, event):
 
     elif app.state == "gameover":
         action = gameover_mouse_pressed(app, event)
+
+        if action is not None:
+            app.click_sound.play()
 
         if action == "restart":
             if app.game_mode == "arcade":
@@ -504,6 +555,7 @@ def move_snake(app):
     row, col = app.head_pos
 
     if app.board[row][col] == -1:
+        app.apple_sound.play()
         app.snake_size += 1
         app.score += 1
 
@@ -524,6 +576,8 @@ def move_snake(app):
             add_coin_at_random_location(app.board)
 
     elif app.board[row][col] == -2:
+        app.coin_sound.play()
+
         app.coin += 1
         save_coins(app.coin)
 
@@ -633,6 +687,9 @@ def redraw_all(app, canvas):
 
         draw_game_info(canvas, app)
 
+
+def app_stopped(app):
+    stop_all_sounds()
     
 
 if __name__ == "__main__":

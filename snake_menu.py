@@ -273,12 +273,11 @@ def menu_mouse_moved(app, event):
 
         if is_inside_button(event.x, event.y, button):
             app.menu_index = i
-            return True
+            return button["action"]
 
-    return False
+    return None
 
 def menu_key_pressed(app, key):
-
     buttons = get_menu_buttons(app)
 
     if key == "Up":
@@ -287,13 +286,18 @@ def menu_key_pressed(app, key):
         if app.menu_index < 0:
             app.menu_index = len(buttons) - 1
 
+        app.hover_sound.play()
+
     elif key == "Down":
         app.menu_index += 1
 
         if app.menu_index >= len(buttons):
             app.menu_index = 0
 
+        app.hover_sound.play()
+
     elif key == "Enter":
+        app.click_sound.play()
         return buttons[app.menu_index]["action"]
 
     return None
@@ -470,10 +474,10 @@ def levels_mouse_moved(app, event):
     reset_button = get_reset_levels_button(app)
 
     if is_inside_button(event.x, event.y, back_button):
-        return True
+        return "levels_back"
 
     if is_inside_button(event.x, event.y, reset_button):
-        return True
+        return "levels_reset"
 
     levels_count = len(app.levels["levels"])
     button_size = 80
@@ -483,14 +487,11 @@ def levels_mouse_moved(app, event):
 
         x, y = get_level_position(app, level_number)
 
-        if (
-            x - button_size / 2 <= event.x <= x + button_size / 2
-            and y - button_size / 2 <= event.y <= y + button_size / 2
-        ):
+        if (x - button_size / 2 <= event.x <= x + button_size / 2 and y - button_size / 2 <= event.y <= y + button_size / 2):
             if level_number <= app.unlocked_level:
-                return True
+                return "level_" + str(level_number)
 
-    return False
+    return None
 
 def levels_mouse_pressed(app, event):
     back_button = get_back_button(app)
@@ -530,9 +531,9 @@ def pause_mouse_moved(app, event):
 
     for button in buttons:
         if is_inside_button(event.x, event.y, button):
-            return True
+            return button["action"]
 
-    return False
+    return None
 
 def get_pause_buttons(app):
     scale = get_scale(app)
@@ -631,9 +632,9 @@ def store_mouse_moved(app, event):
     back_button = get_back_button(app)
 
     if is_inside_button(event.x, event.y, back_button):
-        return True
+        return "store_back"
 
-    return False
+    return None
 
 def draw_store(app, canvas):
     canvas.create_text(
@@ -893,25 +894,27 @@ def draw_settings(app, canvas):
 
 def settings_mouse_moved(app, event):
     if app.changing_control is not None:
-        return False
+        return None
 
     back_button = get_back_button(app)
 
     if is_inside_button(event.x, event.y, back_button):
-        return True
+        return "settings_back"
 
     reset_button = get_reset_settings_button(app)
 
     if is_inside_button(event.x, event.y, reset_button):
-        return True
+        return "settings_reset"
 
     buttons = get_control_buttons(app)
 
-    for button in buttons:
-        if is_inside_button(event.x, event.y, button):
-            return True
+    for i in range(len(buttons)):
+        button = buttons[i]
 
-    return False
+        if is_inside_button(event.x, event.y, button):
+            return "control_" + str(i)
+
+    return None
 
 def settings_mouse_pressed(app, event):
 
@@ -933,7 +936,7 @@ def settings_mouse_pressed(app, event):
     for button in buttons:
         if is_inside_button(event.x, event.y, button):
             app.changing_control = (button["action"], button["index"])
-            return None
+            return "control"
     return None
 
 def draw_key_popup(app, canvas):
@@ -1001,13 +1004,18 @@ def gameover_key_pressed(app, key):
         if app.gameover_index < 0:
             app.gameover_index = len(buttons) - 1
 
+        app.hover_sound.play()
+
     elif key == "Down":
         app.gameover_index += 1
 
         if app.gameover_index >= len(buttons):
             app.gameover_index = 0
 
+        app.hover_sound.play()
+
     elif key == "Enter":
+        app.click_sound.play()
         return buttons[app.gameover_index]["action"]
 
     return None
@@ -1055,6 +1063,6 @@ def gameover_mouse_moved(app, event):
 
         if is_inside_button(event.x, event.y, button):
             app.gameover_index = i
-            return True
+            return button["action"]
 
-    return False
+    return None
