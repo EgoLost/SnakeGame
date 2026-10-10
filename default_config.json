@@ -5,7 +5,7 @@
         "left": ["Left", "a"],
         "right": ["Right", "d"],
         "faster": ["Space", ""],
-        "slower": ["Control_L", "Control_R"],
+        "slower": ["z", "Control_R"],
         "restart": ["r", ""]
     },
 

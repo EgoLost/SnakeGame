@@ -24,6 +24,9 @@ coin = load_image("source/img/coin.png")
 floor = load_image("source/img/floor.png")
 game_fon = load_image("source/img/fon_game.png")
 
+extra_life = load_image("source/img/heart.png")
+meat = load_image("source/img/meat.png")
+
 def draw_game_background(app, canvas):
     image_in_box(
         canvas,
@@ -32,7 +35,8 @@ def draw_game_background(app, canvas):
         app.width,
         app.height,
         game_fon,
-        fit_mode="stretch"
+        fit_mode="stretch",
+        antialias=False
     )
 
 def get_board_box(app):
@@ -51,7 +55,19 @@ def draw_board(canvas, x1, y1, x2, y2, board, direction):
     cell_width = (x2 - x1) / columns_amount
     cell_height = (y2 - y1) / lines_amount
 
-    biggest = get_biggest_value(board)
+    positions = {}
+
+    for row in range(lines_amount):
+        for col in range(columns_amount):
+            value = board[row][col]
+
+            if value > 0:
+                positions[value] = (row, col)
+
+    if len(positions) > 0:
+        biggest = max(positions)
+    else:
+        biggest = 0
 
     for row in range(lines_amount):
         y_one = y1 + cell_height * row
@@ -62,6 +78,7 @@ def draw_board(canvas, x1, y1, x2, y2, board, direction):
             x_two = x_one + cell_width
 
             value = board[row][col]
+
             image_in_box(
                 canvas,
                 x_one,
@@ -69,7 +86,8 @@ def draw_board(canvas, x1, y1, x2, y2, board, direction):
                 x_two,
                 y_two,
                 floor,
-                fit_mode="stretch"
+                fit_mode="stretch",
+                antialias=False
             )
 
             if value == -1:
@@ -91,11 +109,37 @@ def draw_board(canvas, x1, y1, x2, y2, board, direction):
                     y_two,
                     coin
                 )
-            else:
-                image = get_snake_image(board, row, col, biggest, direction)
 
-                if image is not None:
-                    image_in_box(canvas, x_one, y_one, x_two, y_two, image, fit_mode="stretch")
+            elif value == -3:
+                image_in_box(
+                    canvas,
+                    x_one,
+                    y_one,
+                    x_two,
+                    y_two,
+                    meat
+                )
+
+            elif value > 0:
+                image = get_snake_image(
+                    board,
+                    positions,
+                    row,
+                    col,
+                    biggest,
+                    direction
+                )
+
+                image_in_box(
+                    canvas,
+                    x_one,
+                    y_one,
+                    x_two,
+                    y_two,
+                    image,
+                    fit_mode="stretch",
+                    antialias=False
+                )
 
 
 def draw_game_info(canvas, app):
@@ -176,6 +220,35 @@ def draw_game_info(canvas, app):
         fill=main_color
     )
 
+    if (
+    app.game_mode == "arcade"
+    and app.upgrades["extra_life"]["bought"]
+    and app.extra_life_available):
+        life_size = 80 * scale
+
+        life_x1 = info_x - life_size / 2
+        life_y1 = 360 * scale
+
+        life_x2 = life_x1 + life_size
+        life_y2 = life_y1 + life_size
+
+        canvas.create_text(
+            info_x,
+            345 * scale,
+            text="EXTRA LIFE",
+            font=("Georgia", int(18 * scale), "bold"),
+            fill=main_color
+        )
+
+        image_in_box(
+            canvas,
+            life_x1,
+            life_y1,
+            life_x2,
+            life_y2,
+            extra_life
+        )
+
     container_width = 360 * scale
     container_height = 110 * scale
 
@@ -246,33 +319,6 @@ def draw_game_info(canvas, app):
     )
 
 
-def get_biggest_value(board):
-    biggest = 0
-
-    for row in board:
-        for value in row:
-            if value > biggest:
-                biggest = value
-
-    return biggest
-
-
-def find_neighbor(board, row, col, value):
-    if row > 0 and board[row - 1][col] == value:
-        return row - 1, col
-
-    if row < len(board) - 1 and board[row + 1][col] == value:
-        return row + 1, col
-
-    if col > 0 and board[row][col - 1] == value:
-        return row, col - 1
-
-    if col < len(board[0]) - 1 and board[row][col + 1] == value:
-        return row, col + 1
-
-    return None
-
-
 def get_direction(row, col, other_row, other_col):
     if other_row < row:
         return "north"
@@ -287,66 +333,56 @@ def get_direction(row, col, other_row, other_col):
         return "east"
 
 
-def get_snake_image(board, row, col, biggest, direction):
+def get_snake_image(
+    board,
+    positions,
+    row,
+    col,
+    biggest,
+    direction
+):
     value = board[row][col]
 
-    if value <= 0:
-        return None
-
     if value == biggest:
-        return get_head_image(board, row, col, biggest, direction)
+        return get_head_image(direction)
 
     if value == 1:
-        return get_tail_image(board, row, col)
+        return get_tail_image(
+            positions
+        )
 
-    return get_body_image(board, row, col)
+    return get_body_image(
+        positions,
+        value
+    )
 
 
-def get_head_image(board, row, col, biggest, snake_direction):
-
-    if biggest == 1:
-        if snake_direction == "north":
-            return snake_head_up
-
-        if snake_direction == "south":
-            return snake_head_down
-
-        if snake_direction == "west":
-            return snake_head_left
-
-        if snake_direction == "east":
-            return snake_head_right
-
-    neck = find_neighbor(board, row, col, biggest - 1)
-
-    if neck is None:
-        return snake_head_right
-
-    neck_row, neck_col = neck
-
-    direction = get_direction(row, col, neck_row, neck_col)
-
-    if direction == "south":
+def get_head_image(direction):
+    if direction == "north":
         return snake_head_up
 
-    if direction == "north":
+    if direction == "south":
         return snake_head_down
 
     if direction == "west":
-        return snake_head_right
-
-    if direction == "east":
         return snake_head_left
 
+    return snake_head_right
 
-def get_tail_image(board, row, col):
-    body = find_neighbor(board, row, col, 2)
 
-    if body is None:
+def get_tail_image(positions):
+    if 2 not in positions:
         return snake_tail_up
 
-    body_row, body_col = body
-    direction = get_direction(row, col, body_row, body_col)
+    tail_row, tail_col = positions[1]
+    body_row, body_col = positions[2]
+
+    direction = get_direction(
+        tail_row,
+        tail_col,
+        body_row,
+        body_col
+    )
 
     if direction == "south":
         return snake_tail_up
@@ -357,61 +393,73 @@ def get_tail_image(board, row, col):
     if direction == "west":
         return snake_tail_right
 
-    if direction == "east":
-        return snake_tail_left
+    return snake_tail_left
 
 
-def get_body_image(board, row, col):
-    value = board[row][col]
-
-    previous_part = find_neighbor(board, row, col, value - 1)
-    next_part = find_neighbor(board, row, col, value + 1)
-
-    if previous_part is None or next_part is None:
+def get_body_image(positions, value):
+    if value - 1 not in positions:
         return snake_body_vertical
 
-    previous_row, previous_col = previous_part
-    next_row, next_col = next_part
-
-    direction_one = get_direction(row, col, previous_row, previous_col)
-    direction_two = get_direction(row, col, next_row, next_col)
-
-    if (direction_one == "north" and direction_two == "south"):
+    if value + 1 not in positions:
         return snake_body_vertical
 
-    if (direction_one == "south" and direction_two == "north"):
+    row, col = positions[value]
+
+    previous_row, previous_col = positions[
+        value - 1
+    ]
+
+    next_row, next_col = positions[
+        value + 1
+    ]
+
+    direction_one = get_direction(
+        row,
+        col,
+        previous_row,
+        previous_col
+    )
+
+    direction_two = get_direction(
+        row,
+        col,
+        next_row,
+        next_col
+    )
+
+    if {
+        direction_one,
+        direction_two
+    } == {"north", "south"}:
         return snake_body_vertical
 
-    if (direction_one == "east" and direction_two == "west"):
+    if {
+        direction_one,
+        direction_two
+    } == {"east", "west"}:
         return snake_body_horizontal
 
-    if (direction_one == "west" and direction_two == "east"):
-        return snake_body_horizontal
-
-    return get_turn_image(direction_one, direction_two) 
+    return get_turn_image(
+        direction_one,
+        direction_two
+    )
 
 def get_turn_image(direction_one, direction_two):
-    if (direction_one == "north" 
-        and direction_two == "east") or (direction_one == "east" 
-                                         and direction_two == "north"):
+    directions = {direction_one, direction_two}
+
+    if directions == {"north", "east"}:
         return snake_turn_top_right
 
-    if (direction_one == "east" 
-        and direction_two == "south") or (direction_one == "south" 
-                                          and direction_two == "east"
-    ):
+    if directions == {"east", "south"}:
         return snake_turn_right_down
 
-    if (
-        direction_one == "south"
-        and direction_two == "west") or (direction_one == "west"
-                                         and direction_two == "south"):
+    if directions == {"south", "west"}:
         return snake_turn_down_left
 
-    if (
-        direction_one == "west"
-        and direction_two == "north") or (direction_one == "north"
-                                          and direction_two == "west"):
+    if directions == {"west", "north"}:
         return snake_turn_left_top
 
-    return snake_body_vertical
+    if directions == {"north", "south"}:
+        return snake_body_vertical
+
+    return snake_body_horizontal

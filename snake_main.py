@@ -1,6 +1,36 @@
-import random
-from uib_inf100_music import (load_sound_effect,load_looping_sound,stop_all_sounds)
-from snake_view import (draw_board, draw_game_info, draw_game_background, get_board_box)
+from uib_inf100_music import (
+    load_sound_effect,
+    load_looping_sound,
+    stop_all_sounds
+)
+
+from snake_view import (
+    draw_board,
+    draw_game_info,
+    draw_game_background,
+    get_board_box
+)
+
+from snake_game import (
+    create_board,
+    create_starting_snake,
+    get_next_head_position,
+    is_legal_move,
+    subtract_one_from_all_positives,
+    can_change_direction
+)
+
+from snake_food import (
+    add_apple_at_random_location,
+    spawn_next_food
+)
+
+from snake_arcade import (
+    start_arcade,
+    restart_current_arcade_stage,
+    shrink_snake
+)
+
 from snake_menu import (
     draw_menu,
     menu_mouse_pressed,
@@ -24,18 +54,17 @@ from snake_menu import (
     pause_mouse_moved,
     get_volume_sliders
 )
+
 from load_save import (
     load_config,
     save_config,
-    load_default_config,
     reset_settings,
     load_levels,
     load_progress,
     save_progress,
     load_coins,
     save_coins,
-    load_upgrades,
-    save_upgrades
+    load_upgrades
 )
 
 def assign_key(config, action, index, new_key):
@@ -70,7 +99,6 @@ def app_started(app):
 
     # Game
     app.state = "menu"
-    app.speed_mode = "normal"
     app.base_timer_delay = 220
     app.speed_up_held = False
     app.slow_down_held = False
@@ -86,13 +114,11 @@ def app_started(app):
     app.click_sound = load_sound_effect("source/sounds/click.mp3")
 
     apply_volume(app)
-    app.menu_music.play()
-    app.current_music = app.menu_music
 
     app.menu_music.play()
+    app.current_music = app.menu_music
 
     app.hovered_button = None
-    app.current_music = app.menu_music
     # Gameover
     app.gameover_index = 0
 
@@ -116,18 +142,13 @@ def app_started(app):
     app.upgrades = load_upgrades()
     app._root.state("zoomed")
 
-def reset_game(app):
-    load_level(app)
-
 def update_speed(app):
-    app.timer_delay = app.base_timer_delay
-
     if (
         app.speed_up_held
         and app.upgrades["speed_up"]["bought"]
     ):
         app.timer_delay = int(
-            app.base_timer_delay * 0.85
+            app.base_timer_delay * 0.65
         )
 
     elif (
@@ -135,58 +156,11 @@ def update_speed(app):
         and app.upgrades["slow_down"]["bought"]
     ):
         app.timer_delay = int(
-            app.base_timer_delay * 1.15
+            app.base_timer_delay * 1.55
         )
 
-def create_board(rows, cols):
-    board = []
-
-    for row in range(rows):
-        new_row = []
-
-        for col in range(cols):
-            new_row.append(0)
-
-        board.append(new_row)
-
-    return board
-
-def start_arcade(app):
-    app.game_mode = "arcade"
-
-    app.arcade_stage = 1
-
-    app.rows = app.arcade_start_size
-    app.cols = app.arcade_start_size
-
-    app.goal = 12
-    app.score = 0
-
-    app.snake_size = 2
-
-    app.direction = "east"
-    app.next_direction = "east"
-
-    app.arcade_speed = 220
-
-    app.base_timer_delay = app.arcade_speed
-    app.timer_delay = app.base_timer_delay
-    app.speed_up_held = False
-    app.slow_down_held = False
-    app.speed_mode = "normal"
-
-    start_row = app.rows // 2
-    start_col = app.cols // 2
-
-    app.head_pos = (start_row, start_col)
-
-    app.board = create_board(app.rows, app.cols)
-
-    app.board[start_row][start_col] = 1
-
-    add_apple_at_random_location(app.board)
-
-    app.state = "active"
+    else:
+        app.timer_delay = app.base_timer_delay
 
 def load_level(app):
     level = app.levels["levels"][app.level_index]
@@ -198,7 +172,6 @@ def load_level(app):
 
     app.speed_up_held = False
     app.slow_down_held = False
-    app.speed_mode = "normal"
 
     app.rows = level["rows"]
     app.cols = level["cols"]
@@ -244,31 +217,10 @@ def set_volume_from_mouse(app, volume_type, mouse_x):
     apply_volume(app)
     save_config(app.config)
 
-def create_starting_snake(board, start_row, start_col, snake_size, direction):
-    for i in range(snake_size):
-        value = snake_size - i
-
-        row = start_row
-        col = start_col
-
-        if direction == "east":
-            col -= i
-
-        elif direction == "west":
-            col += i
-
-        elif direction == "north":
-            row += i
-
-        elif direction == "south":
-            row -= i
-
-        board[row][col] = value
-
 def start_level(app):
     app.game_mode = "level"
 
-    reset_game(app)
+    load_level(app)
 
     if app.current_music is not None:
         app.current_music.stop()
@@ -303,6 +255,17 @@ def normalize_key(key):
 
     return key
 
+def restart_game(app):
+    stop_all_sounds()
+
+    app.menu_music.play()
+    app.current_music = app.menu_music
+
+    if app.game_mode == "arcade":
+        start_arcade(app)
+    else:
+        start_level(app)
+
 def key_released(app, event):
     key = normalize_key(event.key)
 
@@ -310,7 +273,7 @@ def key_released(app, event):
         app.speed_up_held = False
         update_speed(app)
 
-    elif key in app.config["controls"]["slower"]:
+    if key in app.config["controls"]["slower"]:
         app.slow_down_held = False
         update_speed(app)
 
@@ -331,12 +294,18 @@ def key_pressed(app, event):
 
     if app.state == "active":
 
-        if key in app.config["controls"]["faster"]:
+        if (
+            key in app.config["controls"]["faster"]
+            and app.upgrades["speed_up"]["bought"]
+        ):
             app.speed_up_held = True
             update_speed(app)
             return
 
-        if key in app.config["controls"]["slower"]:
+        if (
+            key in app.config["controls"]["slower"]
+            and app.upgrades["slow_down"]["bought"]
+        ):
             app.slow_down_held = True
             update_speed(app)
             return
@@ -371,37 +340,12 @@ def key_pressed(app, event):
     if app.state == "gameover":
         action = gameover_key_pressed(app, key)
 
-        if key == "r":
-            stop_all_sounds()
-
-            app.menu_music.play()
-            app.current_music = app.menu_music
-
-            if app.game_mode == "arcade":
-                start_arcade(app)
-            else:
-                start_level(app)
-
+        if key == "r" or action == "restart":
+            restart_game(app)
             return
 
-        if action == "restart":
-            stop_all_sounds()
-
-            app.menu_music.play()
-            app.current_music = app.menu_music
-
-            if app.game_mode == "arcade":
-                start_arcade(app)
-            else:
-                start_level(app)
-
         elif action == "menu":
-            stop_all_sounds()
-
-            app.menu_music.play()
-            app.current_music = app.menu_music
-
-            app.state = "menu"
+            go_to_menu(app)
 
         return
 
@@ -416,11 +360,7 @@ def key_pressed(app, event):
 
 
     if key in app.config["controls"]["restart"]:
-        if app.game_mode == "arcade":
-            start_arcade(app)
-        else:
-            start_level(app)
-
+        restart_game(app)
         return
 
     new_direction = None
@@ -452,43 +392,6 @@ def key_pressed(app, event):
             app.current_music.stop()
 
         app.state = "paused"
-
-def add_coin_at_random_location(grid):
-    free_positions = []
-
-    for row in range(len(grid)):
-        for col in range(len(grid[0])):
-            if grid[row][col] == 0:
-                free_positions.append((row, col))
-
-    if len(free_positions) > 0:
-        row, col = random.choice(free_positions)
-        grid[row][col] = -2
-
-def change_music_volume(app, change):
-    app.config["music_volume"] += change
-
-    if app.config["music_volume"] < 0:
-        app.config["music_volume"] = 0
-
-    if app.config["music_volume"] > 1:
-        app.config["music_volume"] = 1
-
-    apply_volume(app)
-    save_config(app.config)
-
-
-def change_sound_volume(app, change):
-    app.config["sound_volume"] += change
-
-    if app.config["sound_volume"] < 0:
-        app.config["sound_volume"] = 0
-
-    if app.config["sound_volume"] > 1:
-        app.config["sound_volume"] = 1
-
-    apply_volume(app)
-    save_config(app.config)
 
 def finish_level(app):
     current_level = app.level_index + 1
@@ -679,13 +582,7 @@ def mouse_pressed(app, event):
             app.state = "active"
 
         elif action == "menu":
-            if app.current_music is not None:
-                app.current_music.stop()
-
-            app.menu_music.play()
-            app.current_music = app.menu_music
-
-            app.state = "menu"
+            go_to_menu(app)
 
         return
 
@@ -696,39 +593,20 @@ def mouse_pressed(app, event):
             app.click_sound.play()
 
         if action == "restart":
-            stop_all_sounds()
-
-            app.menu_music.play()
-            app.current_music = app.menu_music
-
-            if app.game_mode == "arcade":
-                start_arcade(app)
-            else:
-                start_level(app)
+            restart_game(app)
 
         elif action == "menu":
-            stop_all_sounds()
-
-            app.menu_music.play()
-            app.current_music = app.menu_music
-
-            app.state = "menu"
+            go_to_menu(app)
 
         return
 
-def is_legal_move(pos, board):
-    row, col = pos
+def go_to_menu(app):
+    stop_all_sounds()
 
-    if row < 0 or row >= len(board):
-        return False
+    app.menu_music.play()
+    app.current_music = app.menu_music
 
-    if col < 0 or col >= len(board[0]):
-        return False
-
-    if board[row][col] > 0:
-        return False
-
-    return True
+    app.state = "menu"
 
 def get_level_music_path(level_number):
     pair_number = (level_number + 1) // 2
@@ -740,58 +618,21 @@ def get_level_music_path(level_number):
 
     return "source/music/levels/" + file_name
 
-def add_apple_at_random_location(grid):
-    free_positions = []
-
-    for row in range(len(grid)):
-        for col in range(len(grid[0])):
-            if grid[row][col] == 0:
-                free_positions.append((row, col))
-
-    if len(free_positions) > 0:
-        row, col = random.choice(free_positions)
-
-        grid[row][col] = -1
-
-def get_next_head_position(head_pos, direction):
-    row, col = head_pos
-
-    if direction == "east":
-        col += 1
-
-    elif direction == "west":
-        col -= 1
-
-    elif direction == "north":
-        row -= 1
-
-    elif direction == "south":
-        row += 1
-
-    return (row, col)
-
-def subtract_one_from_all_positives(grid):
-    for row in range(len(grid)):
-        for col in range(len(grid[0])):
-            if grid[row][col] > 0:
-                grid[row][col] -= 1
-
-def can_change_direction(current_direction, new_direction):
-    opposite = {
-        "north": "south",
-        "south": "north",
-        "east": "west",
-        "west": "east"
-    }
-
-    return new_direction != opposite[current_direction]
-
 def move_snake(app):
     app.direction = app.next_direction
 
     next_pos = get_next_head_position(app.head_pos, app.direction)
 
     if not is_legal_move(next_pos, app.board):
+        if (
+            app.game_mode == "arcade"
+            and app.extra_life_available
+        ):
+            app.extra_life_available = False
+
+            restart_current_arcade_stage(app)
+            return
+
         app.gameover_index = 0
         app.gameover_sound.play()
 
@@ -817,10 +658,7 @@ def move_snake(app):
                 finish_level(app)
                 return
 
-        add_apple_at_random_location(app.board)
-
-        if random.randint(1, 100) <= 20:
-            add_coin_at_random_location(app.board)
+        spawn_next_food(app)
 
     elif app.board[row][col] == -2:
         app.coin_sound.play()
@@ -831,53 +669,28 @@ def move_snake(app):
         subtract_one_from_all_positives(app.board)
         app.board[row][col] = app.snake_size
 
+    elif app.board[row][col] == -3:
+        app.apple_sound.play()
+
+        app.snake_size += 1
+        app.score += 3
+
+        app.board[row][col] = app.snake_size
+
+        if app.score >= app.goal:
+            if app.game_mode == "arcade":
+                app.timer_delay = 100
+                app.state = "shrinking"
+                return
+            else:
+                finish_level(app)
+                return
+
+        spawn_next_food(app)
+
     else:
         subtract_one_from_all_positives(app.board)
         app.board[row][col] = app.snake_size
-
-def start_next_arcade_stage(app):
-    app.arcade_stage += 1
-
-    if app.rows < 14:
-        app.rows += 1
-        app.cols += 1
-
-    else:
-        if app.arcade_speed > 80:
-            app.arcade_speed -= 10
-
-    app.base_timer_delay = app.arcade_speed
-    app.timer_delay = app.base_timer_delay
-
-    app.speed_up_held = False
-    app.slow_down_held = False
-
-    app.score = 0
-    app.goal += 3
-
-    app.snake_size = 1
-
-    app.direction = "east"
-    app.next_direction = "east"
-
-    start_row = app.rows // 2
-    start_col = app.cols // 2
-
-    app.head_pos = (start_row, start_col)
-    app.board = create_board(app.rows,app.cols)
-    app.board[start_row][start_col] = 1
-
-    add_apple_at_random_location(app.board)
-
-    app.state = "active"
-
-def shrink_snake(app):
-    subtract_one_from_all_positives(app.board)
-
-    app.snake_size -= 1
-
-    if app.snake_size <= 1:
-        start_next_arcade_stage(app)
 
 def redraw_all(app, canvas):
 

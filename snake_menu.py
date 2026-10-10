@@ -450,7 +450,7 @@ def menu_mouse_moved(app, event):
 def menu_key_pressed(app, key):
     buttons = get_menu_buttons(app)
 
-    if key == "Up":
+    if key in app.config["controls"]["up"]:
         app.menu_index -= 1
 
         if app.menu_index < 0:
@@ -458,7 +458,7 @@ def menu_key_pressed(app, key):
 
         app.hover_sound.play()
 
-    elif key == "Down":
+    elif key in app.config["controls"]["down"]:
         app.menu_index += 1
 
         if app.menu_index >= len(buttons):

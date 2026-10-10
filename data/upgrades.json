@@ -32,7 +32,7 @@
         "price": 20,
         "bought": true,
         "image": "source/img/store/buy_meat.png",
-        "description": "Unlocks a special food type for the snake. This food gives 2 points when eaten."
+        "description": "Unlocks a special food type for the snake. This food gives 3 points when eaten."
     },
     "floor_selection": {
         "name": "Board Themes",
