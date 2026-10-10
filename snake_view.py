@@ -19,6 +19,7 @@ snake_turn_down_left = load_image("source/img/Snake_turn_down_left.png")
 snake_turn_left_top = load_image("source/img/Snake_turn_left_top.png")
 
 apple = load_image("source/img/apple.png")
+coin_container = load_image("source/img/coin_container.png")
 coin = load_image("source/img/coin.png")
 floor = load_image("source/img/floor.png")
 game_fon = load_image("source/img/fon_game.png")
@@ -175,14 +176,37 @@ def draw_game_info(canvas, app):
         fill=main_color
     )
 
-    coin_y = 598 * scale
-    coin_size = 55 * scale
+    container_width = 360 * scale
+    container_height = 110 * scale
 
-    coin_x1 = 1180 * scale
-    coin_y1 = coin_y - coin_size / 2
+    container_x1 = info_x - container_width / 2
+    container_y1 = 575 * scale
+
+    container_x2 = container_x1 + container_width
+    container_y2 = container_y1 + container_height
+
+    image_in_box(
+        canvas,
+        container_x1,
+        container_y1,
+        container_x2,
+        container_y2,
+        coin_container,
+        fit_mode="stretch"
+    )
+
+    coin_size = 42 * scale
+
+    coin_x1 = container_x1 + 100 * scale
+
+    coin_y1 = (
+        container_y1
+        + container_height / 2
+        - coin_size / 2
+    )
 
     coin_x2 = coin_x1 + coin_size
-    coin_y2 = coin_y + coin_size / 2
+    coin_y2 = coin_y1 + coin_size
 
     image_in_box(
         canvas,
@@ -194,12 +218,30 @@ def draw_game_info(canvas, app):
         fit_mode="stretch"
     )
 
+    text_x = coin_x2 + 28 * scale
+    text_y = container_y1 + container_height / 2 - 3 * scale
+
+    coin_font = (
+        "Georgia",
+        int(36 * scale),
+        "bold"
+    )
+
     canvas.create_text(
-        coin_x2 + 15 * scale,
-        coin_y,
+        text_x + 3 * scale,
+        text_y + 3 * scale,
         text=str(app.coin),
-        font=("Georgia", int(25 * scale), "bold"),
-        fill=main_color,
+        font=coin_font,
+        fill="#3b210d",
+        anchor="w"
+    )
+
+    canvas.create_text(
+        text_x,
+        text_y,
+        text=str(app.coin),
+        font=coin_font,
+        fill="#f5d56b",
         anchor="w"
     )
 

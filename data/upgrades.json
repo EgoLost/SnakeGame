@@ -1,0 +1,44 @@
+{
+    "speed_up": {
+        "name": "Speed Up",
+        "price": 25,
+        "bought": false,
+        "image": "source/img/store/speed_up.png"
+    },
+
+    "slow_down": {
+        "name": "Slow Down",
+        "price": 25,
+        "bought": false,
+        "image": "source/img/store/slow_down.png"
+    },
+
+    "extra_life": {
+        "name": "Extra Life",
+        "price": 40,
+        "bought": false,
+        "image": "source/img/store/extra_life.png"
+    },
+
+    "coin_chance": {
+        "name": "Coin Chance",
+        "price": 30,
+        "bought": false,
+        "image": "source/img/store/coin_chance.png"
+    },
+
+    "meat": {
+        "name": "Meat",
+        "price": 20,
+        "bought": false,
+        "image": "source/img/store/meat.png"
+    },
+
+    "floor_selection": {
+        "name": "Board Themes",
+        "price": 50,
+        "bought": false,
+        "image": "source/img/store/floor_selection.png"
+    }
+}
+

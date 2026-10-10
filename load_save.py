@@ -52,3 +52,22 @@ def save_coins(coins):
     content = json.dumps(data, indent=4)
 
     Path("data/coins.json").write_text(content,encoding="utf-8")
+
+def load_upgrades():
+    content = Path("data/upgrades.json").read_text(
+        encoding="utf-8"
+    )
+
+    return json.loads(content)
+
+
+def save_upgrades(upgrades):
+    content = json.dumps(
+        upgrades,
+        indent=4
+    )
+
+    Path("data/upgrades.json").write_text(
+        content,
+        encoding="utf-8"
+    )

@@ -1,5 +1,14 @@
 from uib_inf100_graphics.helpers import load_image, image_in_box
 
+unknown_icon = load_image("source/img/store/unknown.png")
+
+speed_up_icon = load_image("source/img/store/speed_up.png")
+slow_down_icon = load_image("source/img/store/slow_down.png")
+extra_life_icon = load_image("source/img/store/buy_heart.png")
+coin_chance_icon = load_image("source/img/store/coin_upchance.png")
+meat_icon = load_image("source/img/store/buy_meat.png")
+floor_selection_icon = load_image("source/img/store/board_buy.png")
+
 back = load_image("source/img/back.png")
 title = load_image("source/img/Title.png")
 fon = load_image("source/img/fon.png")
@@ -24,11 +33,17 @@ gameover_title = load_image("source/img/gameover_title.png")
 settings_fon = load_image("source/img/settings_fon.png")
 settings_title = load_image("source/img/settings_title.png")
 
+levels_title = load_image("source/img/levels_title.png")
 levels_fon = load_image("source/img/levels_fon.png")
 lock = load_image("source/img/lock.png")
 
 pause_fon = load_image("source/img/pause_fon.png")
 pause_title = load_image("source/img/Pause.png")
+
+coin = load_image("source/img/coin.png")
+coin_container = load_image("source/img/coin_container.png")
+shop_fon = load_image("source/img/shop_fon.png")
+
 
 def get_button_image(action):
     if action == "active":
@@ -211,8 +226,8 @@ def is_inside_button(x, y, button):
 
 def get_levels_back_button(app):
     scale = get_scale(app)
-    button_width = 220 * scale
-    button_height = 50 * scale
+    button_width = 300 * scale
+    button_height = 70 * scale
 
     x1 = app.width / 2 - button_width / 2
     x2 = app.width / 2 + button_width / 2
@@ -232,8 +247,8 @@ def draw_menu(app, canvas):
     scale = get_scale(app)
     image_in_box(canvas, 0, 0, app.width, app.height, fon, fit_mode="stretch")
 
-    logo_width = 500 * scale
-    logo_height = 150 * scale
+    logo_width = 600 * scale
+    logo_height = 200 * scale
 
     logo_x1 = app.width / 2 - logo_width / 2
     logo_y1 = 25 * scale
@@ -356,6 +371,24 @@ def draw_levels(app, canvas):
         fit_mode="stretch"
     )
 
+    title_width = 520 * scale
+    title_height = 160 * scale
+
+    title_x1 = app.width / 2 - title_width / 2
+    title_y1 = 25 * scale
+
+    title_x2 = app.width / 2 + title_width / 2
+    title_y2 = title_y1 + title_height
+
+    image_in_box(
+        canvas,
+        title_x1,
+        title_y1,
+        title_x2,
+        title_y2,
+        levels_title
+    )
+
     levels_count = len(app.levels["levels"])
 
     for i in range(levels_count):
@@ -405,7 +438,7 @@ def draw_levels(app, canvas):
     draw_back_button(app, canvas)
 
 def get_back_button(app):
-    button_size = 60
+    button_size = 90
     margin = 25
 
     x2 = app.width - margin
@@ -628,6 +661,36 @@ def pause_mouse_pressed(app, event):
 # STORE
 # \_/\_/\_/\_/\_/\_/\_/\_/\_/\_/\_/\_/\_/\_/\_/\_/
 
+def get_store_boxes(app):
+    scale = get_scale(app)
+
+    box_size = 150 * scale
+    gap_x = 40 * scale
+    gap_y = 35 * scale
+
+    total_width = box_size * 3 + gap_x * 2
+
+    start_x = app.width / 2 - total_width / 2
+    start_y = 220 * scale
+
+    boxes = []
+
+    for i in range(6):
+        row = i // 3
+        col = i % 3
+
+        x1 = start_x + col * (box_size + gap_x)
+        y1 = start_y + row * (box_size + gap_y)
+
+        boxes.append({
+            "x1": x1,
+            "y1": y1,
+            "x2": x1 + box_size,
+            "y2": y1 + box_size
+        })
+
+    return boxes
+
 def store_mouse_moved(app, event):
     back_button = get_back_button(app)
 
@@ -637,16 +700,95 @@ def store_mouse_moved(app, event):
     return None
 
 def draw_store(app, canvas):
-    canvas.create_text(
-        app.width / 2,
-        60,
-        text="STORE",
-        font="Arial 30 bold"
+    scale = get_scale(app)
+
+    # Background
+    image_in_box(
+        canvas,
+        0,
+        0,
+        app.width,
+        app.height,
+        shop_fon,
+        fit_mode="stretch"
     )
 
-    canvas.create_text(app.width / 2, 120, text=f"Coins: {app.coin}", font="Arial 18")
+    container_width = 360 * scale
+    container_height = 110 * scale
 
-    canvas.create_text(app.width / 2, app.height / 2, text="Store will be added later", font="Arial 16")
+    container_x1 = app.width / 2 - container_width / 2
+    container_y1 = 125 * scale
+
+    container_x2 = container_x1 + container_width
+    container_y2 = container_y1 + container_height
+
+    image_in_box(
+        canvas,
+        container_x1,
+        container_y1,
+        container_x2,
+        container_y2,
+        coin_container,
+        fit_mode="stretch"
+    )
+
+    # Coin icon
+    coin_size = 40 * scale
+
+    coin_x1 = container_x1 + 100 * scale
+    coin_y1 = (
+        container_y1 - 1 * scale
+        + container_height / 2
+        - coin_size / 2
+    )
+
+    coin_x2 = coin_x1 + coin_size
+    coin_y2 = coin_y1 + coin_size
+
+    image_in_box(
+        canvas,
+        coin_x1,
+        coin_y1,
+        coin_x2,
+        coin_y2,
+        coin,
+        fit_mode="stretch"
+    )
+
+    # Coin number
+    canvas.create_text(
+        coin_x2 + 30 * scale,
+        container_y1 + container_height / 2 - 6 * scale,
+        text=str(app.coin),
+        font=("Georgia", int(34 * scale), "bold"),
+        fill="#e8c978",
+        anchor="w"
+    )
+
+    boxes = get_store_boxes(app)
+
+    i = 0
+
+    for upgrade_key in app.upgrades:
+        item = app.upgrades[upgrade_key]
+        box = boxes[i]
+
+        if item["bought"]:
+            image = load_image(item["image"])
+        else:
+            image = unknown_icon
+
+        image_in_box(
+            canvas,
+            box["x1"],
+            box["y1"],
+            box["x2"],
+            box["y2"],
+            image,
+            fit_mode="contain"
+        )
+
+        i += 1
 
     draw_back_button(app, canvas)
 
@@ -662,11 +804,63 @@ def store_mouse_pressed(app, event):
 # SETTINGS
 # \_/\_/\_/\_/\_/\_/\_/\_/\_/\_/\_/\_/\_/\_/\_/\_/
 
+def get_volume_sliders(app):
+    controls = app.config["controls"]
+
+    label_width = 140
+    button_width = 120
+    button_height = 35
+    button_gap = 20
+    row_gap = 8
+
+    total_width = (
+        label_width
+        + button_width
+        + button_gap
+        + button_width
+    )
+
+    total_height = (
+        button_height * len(controls)
+        + row_gap * (len(controls) - 1)
+    )
+
+    start_x = app.width / 2 - total_width / 2
+    available_center_y = app.height / 2 - 45
+    start_y = available_center_y - total_height / 2
+
+    panel_x1 = start_x - 35
+    panel_x2 = start_x + total_width + 35
+
+    slider_x1 = start_x + label_width
+    slider_x2 = panel_x2 - 25
+
+    music_y = start_y + total_height + 55
+    sound_y = start_y + total_height + 95
+
+    return {
+        "music": {
+            "label_x": start_x,
+            "x1": slider_x1,
+            "x2": slider_x2,
+            "y": music_y,
+            "height": 10
+        },
+
+        "sound": {
+            "label_x": start_x,
+            "x1": slider_x1,
+            "x2": slider_x2,
+            "y": sound_y,
+            "height": 10
+        }
+    }
+
 def get_reset_settings_button(app):
     scale = get_scale(app)
 
-    button_width = 220 * scale
-    button_height = 50 * scale
+    button_width = 300 * scale
+    button_height = 70 * scale
 
     x1 = app.width / 2 - button_width / 2
     x2 = app.width / 2 + button_width / 2
@@ -686,8 +880,8 @@ def get_reset_settings_button(app):
 def get_reset_levels_button(app):
     scale = get_scale(app)
 
-    button_width = 220 * scale
-    button_height = 50 * scale
+    button_width = 300 * scale
+    button_height = 70 * scale
 
     x1 = app.width / 2 - button_width / 2
     x2 = app.width / 2 + button_width / 2
@@ -718,7 +912,7 @@ def get_control_buttons(app):
     total_height = (button_height * len(controls) + row_gap * (len(controls) - 1))
 
     start_x = app.width / 2 - total_width / 2
-    available_center_y = app.height / 2 + 25
+    available_center_y = app.height / 2 - 45
     start_y = available_center_y - total_height / 2
 
     first_button_x1 = start_x + label_width
@@ -801,8 +995,8 @@ def draw_settings(app, canvas):
 
     image_in_box(canvas, 0, 0, app.width, app.height, settings_fon, fit_mode="stretch")
 
-    title_width = 420 * scale
-    title_height = 110 * scale
+    title_width = 520 * scale
+    title_height = 160 * scale
 
     title_x1 = app.width / 2 - title_width / 2
     title_y1 = 20 * scale
@@ -825,14 +1019,14 @@ def draw_settings(app, canvas):
     total_height = (button_height * len(controls) + row_gap * (len(controls) - 1))
 
     start_x = app.width / 2 - total_width / 2
-    available_center_y = app.height / 2 + 20
+    available_center_y = app.height / 2 - 45
     start_y = (available_center_y - total_height / 2)
 
     panel_x1 = start_x - 35
     panel_x2 = start_x + total_width + 35
 
-    panel_y1 = start_y - 45
-    panel_y2 = start_y + total_height + 25
+    panel_y1 = start_y - 35
+    panel_y2 = start_y + total_height + 135
 
     canvas.create_rectangle(
         panel_x1,
@@ -889,10 +1083,98 @@ def draw_settings(app, canvas):
     draw_button(app, canvas, reset_button)
     draw_back_button(app, canvas)
 
+    sliders = get_volume_sliders(app)
+
+    music_slider = sliders["music"]
+    sound_slider = sliders["sound"]
+
+    music_volume = app.config["music_volume"]
+    sound_volume = app.config["sound_volume"]
+
+    canvas.create_text(
+        music_slider["label_x"],
+        music_slider["y"],
+        text="MUSIC",
+        font=("Georgia", 16, "bold"),
+        fill="#e8c978",
+        anchor="w"
+    )
+
+    canvas.create_rectangle(
+        music_slider["x1"],
+        music_slider["y"] - music_slider["height"] / 2,
+        music_slider["x2"],
+        music_slider["y"] + music_slider["height"] / 2,
+        fill="#2f3a2a",
+        outline="#c9a45c",
+        width=2
+    )
+
+    music_knob_x = (
+        music_slider["x1"]
+        + (music_slider["x2"] - music_slider["x1"]) * music_volume
+    )
+
+    canvas.create_oval(
+        music_knob_x - 10,
+        music_slider["y"] - 10,
+        music_knob_x + 10,
+        music_slider["y"] + 10,
+        fill="#e8c978",
+        outline="#c9a45c",
+        width=2
+    )
+
+    canvas.create_text(
+        sound_slider["label_x"],
+        sound_slider["y"],
+        text="SOUNDS",
+        font=("Georgia", 16, "bold"),
+        fill="#e8c978",
+        anchor="w"
+    )
+
+    canvas.create_rectangle(
+        sound_slider["x1"],
+        sound_slider["y"] - sound_slider["height"] / 2,
+        sound_slider["x2"],
+        sound_slider["y"] + sound_slider["height"] / 2,
+        fill="#2f3a2a",
+        outline="#c9a45c",
+        width=2
+    )
+
+    sound_knob_x = (
+        sound_slider["x1"]
+        + (sound_slider["x2"] - sound_slider["x1"]) * sound_volume
+    )
+
+    canvas.create_oval(
+        sound_knob_x - 10,
+        sound_slider["y"] - 10,
+        sound_knob_x + 10,
+        sound_slider["y"] + 10,
+        fill="#e8c978",
+        outline="#c9a45c",
+        width=2
+    )
+
     if app.changing_control is not None:
         draw_key_popup(app, canvas)
 
 def settings_mouse_moved(app, event):
+
+    sliders = get_volume_sliders(app)
+
+    for slider_name in sliders:
+        slider = sliders[slider_name]
+
+        if (
+            slider["x1"] <= event.x <= slider["x2"]
+            and slider["y"] - 15 <= event.y <= slider["y"] + 15
+        ):
+            return slider_name + "_volume"
+
     if app.changing_control is not None:
         return None
 

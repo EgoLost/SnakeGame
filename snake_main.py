@@ -22,6 +22,7 @@ from snake_menu import (
     store_mouse_moved,
     settings_mouse_moved,
     pause_mouse_moved,
+    get_volume_sliders
 )
 from load_save import (
     load_config,
@@ -32,7 +33,9 @@ from load_save import (
     load_progress,
     save_progress,
     load_coins,
-    save_coins
+    save_coins,
+    load_upgrades,
+    save_upgrades
 )
 
 def assign_key(config, action, index, new_key):
@@ -45,6 +48,18 @@ def assign_key(config, action, index, new_key):
 
     controls[action][index] = new_key
 
+def apply_volume(app):
+    music_volume = app.config["music_volume"]
+    sound_volume = app.config["sound_volume"]
+
+    app.menu_music.set_volume(music_volume)
+
+    app.apple_sound.set_volume(sound_volume)
+    app.coin_sound.set_volume(sound_volume)
+    app.hover_sound.set_volume(sound_volume)
+    app.click_sound.set_volume(sound_volume)
+    app.gameover_sound.set_volume(sound_volume)
+
 def app_started(app):
     # Config
     app.config = load_config()
@@ -55,22 +70,22 @@ def app_started(app):
     app.state = "menu"
 
     # Sounds
+    app.dragging_volume = None
+
+    app.gameover_sound = load_sound_effect("source/sounds/game_over.mp3")
     app.apple_sound = load_sound_effect("source/sounds/eat_apple.mp3")
     app.menu_music = load_looping_sound("source/music/fon.mp3")
     app.coin_sound = load_sound_effect("source/sounds/coin_pickup.mp3")
     app.hover_sound = load_sound_effect("source/sounds/hover.mp3")
     app.click_sound = load_sound_effect("source/sounds/click.mp3")
 
-    app.apple_sound.set_volume(0.5)
-    app.coin_sound.set_volume(0.7)
-    app.hover_sound.set_volume(1.0)
-    app.click_sound.set_volume(1.0)
+    apply_volume(app)
+    app.menu_music.play()
+    app.current_music = app.menu_music
 
-    app.hovered_button = None
-
-    app.menu_music.set_volume(0.35)
     app.menu_music.play()
 
+    app.hovered_button = None
     app.current_music = app.menu_music
     # Gameover
     app.gameover_index = 0
@@ -78,7 +93,7 @@ def app_started(app):
     # Arcade
     app.game_mode = None
     app.arcade_stage = 1
-    app.arcade_start_size = 7
+    app.arcade_start_size = 6
 
     # Level
     app.levels = load_levels()
@@ -92,7 +107,7 @@ def app_started(app):
     coins_data = load_coins()
     app.coin = coins_data["coins"]
 
-    app._root.state("zoomed")
+    app.upgrades = load_upgrades()
 
 def reset_game(app):
     load_level(app)
@@ -121,7 +136,7 @@ def start_arcade(app):
     app.goal = 12
     app.score = 0
 
-    app.snake_size = 1
+    app.snake_size = 2
 
     app.direction = "east"
     app.next_direction = "east"
@@ -168,6 +183,31 @@ def load_level(app):
 
     add_apple_at_random_location(app.board)
 
+def set_volume_from_mouse(app, volume_type, mouse_x):
+    sliders = get_volume_sliders(app)
+    slider = sliders[volume_type]
+
+    x1 = slider["x1"]
+    x2 = slider["x2"]
+
+    if mouse_x < x1:
+        mouse_x = x1
+
+    if mouse_x > x2:
+        mouse_x = x2
+
+    volume = (mouse_x - x1) / (x2 - x1)
+
+    volume = round(volume, 2)
+
+    if volume_type == "music":
+        app.config["music_volume"] = volume
+    else:
+        app.config["sound_volume"] = volume
+
+    apply_volume(app)
+    save_config(app.config)
+
 def create_starting_snake(board, start_row, start_col, snake_size, direction):
     for i in range(snake_size):
         value = snake_size - i
@@ -191,7 +231,24 @@ def create_starting_snake(board, start_row, start_col, snake_size, direction):
 
 def start_level(app):
     app.game_mode = "level"
+
     reset_game(app)
+
+    if app.current_music is not None:
+        app.current_music.stop()
+
+    path = get_level_music_path(app.level)
+
+    app.level_music = load_looping_sound(path)
+
+    app.level_music.set_volume(
+        app.config["music_volume"]
+    )
+
+    app.level_music.play()
+
+    app.current_music = app.level_music
+
     app.state = "active"
 
 def timer_fired(app):
@@ -256,24 +313,44 @@ def key_pressed(app, event):
         action = gameover_key_pressed(app, key)
 
         if key == "r":
+            stop_all_sounds()
+
+            app.menu_music.play()
+            app.current_music = app.menu_music
+
             if app.game_mode == "arcade":
                 start_arcade(app)
             else:
                 start_level(app)
 
+            return
+
         if action == "restart":
+            stop_all_sounds()
+
+            app.menu_music.play()
+            app.current_music = app.menu_music
+
             if app.game_mode == "arcade":
                 start_arcade(app)
             else:
                 start_level(app)
 
         elif action == "menu":
+            stop_all_sounds()
+
+            app.menu_music.play()
+            app.current_music = app.menu_music
+
             app.state = "menu"
 
         return
 
     if app.state == "paused":
         if key in ["Escape", "BackSpace"]:
+            if app.current_music is not None:
+                app.current_music.play()
+
             app.state = "active"
 
         return
@@ -312,6 +389,9 @@ def key_pressed(app, event):
             app.next_direction = new_direction
 
     elif key in ["Escape", "BackSpace"]:
+        if app.current_music is not None:
+            app.current_music.stop()
+
         app.state = "paused"
 
 def add_coin_at_random_location(grid):
@@ -326,6 +406,31 @@ def add_coin_at_random_location(grid):
         row, col = random.choice(free_positions)
         grid[row][col] = -2
 
+def change_music_volume(app, change):
+    app.config["music_volume"] += change
+
+    if app.config["music_volume"] < 0:
+        app.config["music_volume"] = 0
+
+    if app.config["music_volume"] > 1:
+        app.config["music_volume"] = 1
+
+    apply_volume(app)
+    save_config(app.config)
+
+
+def change_sound_volume(app, change):
+    app.config["sound_volume"] += change
+
+    if app.config["sound_volume"] < 0:
+        app.config["sound_volume"] = 0
+
+    if app.config["sound_volume"] > 1:
+        app.config["sound_volume"] = 1
+
+    apply_volume(app)
+    save_config(app.config)
+
 def finish_level(app):
     current_level = app.level_index + 1
 
@@ -338,6 +443,12 @@ def finish_level(app):
 
     save_progress(app)
 
+    if app.current_music is not None:
+        app.current_music.stop()
+
+    app.menu_music.play()
+    app.current_music = app.menu_music
+
     app.state = "levels"
 
 def reset_progress(app):
@@ -345,6 +456,18 @@ def reset_progress(app):
     app.completed_levels = []
 
     save_progress(app)
+
+def mouse_released(app, event):
+    if app.dragging_volume is not None:
+        app.dragging_volume = None
+
+def mouse_dragged(app, event):
+    if app.dragging_volume is not None:
+        set_volume_from_mouse(
+            app,
+            app.dragging_volume,
+            event.x
+        )
 
 def mouse_moved(app, event):
     hovered_button = None
@@ -436,6 +559,39 @@ def mouse_pressed(app, event):
 
 
     elif app.state == "settings":
+        sliders = get_volume_sliders(app)
+
+        music_slider = sliders["music"]
+        sound_slider = sliders["sound"]
+
+        if (
+            music_slider["x1"] <= event.x <= music_slider["x2"]
+            and music_slider["y"] - 18 <= event.y <= music_slider["y"] + 18
+        ):
+            app.dragging_volume = "music"
+
+            set_volume_from_mouse(
+                app,
+                "music",
+                event.x
+            )
+
+            return
+
+        if (
+            sound_slider["x1"] <= event.x <= sound_slider["x2"]
+            and sound_slider["y"] - 15 <= event.y <= sound_slider["y"] + 15
+        ):
+            app.dragging_volume = "sound"
+
+            set_volume_from_mouse(
+                app,
+                "sound",
+                event.x
+            )
+
+            return
+
         action = settings_mouse_pressed(app, event)
 
         if action is not None:
@@ -443,6 +599,7 @@ def mouse_pressed(app, event):
 
         if action == "reset":
             reset_settings(app)
+            apply_volume(app)
 
         elif action == "back":
             app.state = "menu"
@@ -457,9 +614,18 @@ def mouse_pressed(app, event):
             app.click_sound.play()
 
         if action == "continue":
+            if app.current_music is not None:
+                app.current_music.play()
+
             app.state = "active"
 
         elif action == "menu":
+            if app.current_music is not None:
+                app.current_music.stop()
+
+            app.menu_music.play()
+            app.current_music = app.menu_music
+
             app.state = "menu"
 
         return
@@ -471,12 +637,22 @@ def mouse_pressed(app, event):
             app.click_sound.play()
 
         if action == "restart":
+            stop_all_sounds()
+
+            app.menu_music.play()
+            app.current_music = app.menu_music
+
             if app.game_mode == "arcade":
                 start_arcade(app)
             else:
                 start_level(app)
 
         elif action == "menu":
+            stop_all_sounds()
+
+            app.menu_music.play()
+            app.current_music = app.menu_music
+
             app.state = "menu"
 
         return
@@ -494,6 +670,16 @@ def is_legal_move(pos, board):
         return False
 
     return True
+
+def get_level_music_path(level_number):
+    pair_number = (level_number + 1) // 2
+
+    first_level = pair_number * 2 - 1
+    second_level = first_level + 1
+
+    file_name = (f"{first_level:02d}-{second_level:02d}_level.mp3")
+
+    return "source/music/levels/" + file_name
 
 def add_apple_at_random_location(grid):
     free_positions = []
@@ -548,6 +734,8 @@ def move_snake(app):
 
     if not is_legal_move(next_pos, app.board):
         app.gameover_index = 0
+        app.gameover_sound.play()
+
         app.state = "gameover"
         return
 
