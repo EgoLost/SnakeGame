@@ -65,9 +65,15 @@ def app_started(app):
     app.config = load_config()
     app.changing_control = None
     app.menu_index = 0
+    app.pending_purchase = None
+    app.selected_upgrade = None
 
     # Game
     app.state = "menu"
+    app.speed_mode = "normal"
+    app.base_timer_delay = 220
+    app.speed_up_held = False
+    app.slow_down_held = False
 
     # Sounds
     app.dragging_volume = None
@@ -108,9 +114,29 @@ def app_started(app):
     app.coin = coins_data["coins"]
 
     app.upgrades = load_upgrades()
+    app._root.state("zoomed")
 
 def reset_game(app):
     load_level(app)
+
+def update_speed(app):
+    app.timer_delay = app.base_timer_delay
+
+    if (
+        app.speed_up_held
+        and app.upgrades["speed_up"]["bought"]
+    ):
+        app.timer_delay = int(
+            app.base_timer_delay * 0.85
+        )
+
+    elif (
+        app.slow_down_held
+        and app.upgrades["slow_down"]["bought"]
+    ):
+        app.timer_delay = int(
+            app.base_timer_delay * 1.15
+        )
 
 def create_board(rows, cols):
     board = []
@@ -142,7 +168,12 @@ def start_arcade(app):
     app.next_direction = "east"
 
     app.arcade_speed = 220
-    app.timer_delay = app.arcade_speed
+
+    app.base_timer_delay = app.arcade_speed
+    app.timer_delay = app.base_timer_delay
+    app.speed_up_held = False
+    app.slow_down_held = False
+    app.speed_mode = "normal"
 
     start_row = app.rows // 2
     start_col = app.cols // 2
@@ -162,7 +193,12 @@ def load_level(app):
 
     app.level = level["level"]
     app.goal = level["goal"]
-    app.timer_delay = level["speed"]
+    app.base_timer_delay = level["speed"]
+    app.timer_delay = app.base_timer_delay
+
+    app.speed_up_held = False
+    app.slow_down_held = False
+    app.speed_mode = "normal"
 
     app.rows = level["rows"]
     app.cols = level["cols"]
@@ -267,6 +303,17 @@ def normalize_key(key):
 
     return key
 
+def key_released(app, event):
+    key = normalize_key(event.key)
+
+    if key in app.config["controls"]["faster"]:
+        app.speed_up_held = False
+        update_speed(app)
+
+    elif key in app.config["controls"]["slower"]:
+        app.slow_down_held = False
+        update_speed(app)
+
 def key_pressed(app, event):
     key = normalize_key(event.key)
 
@@ -281,6 +328,18 @@ def key_pressed(app, event):
         app.changing_control = None
 
         return
+
+    if app.state == "active":
+
+        if key in app.config["controls"]["faster"]:
+            app.speed_up_held = True
+            update_speed(app)
+            return
+
+        if key in app.config["controls"]["slower"]:
+            app.slow_down_held = True
+            update_speed(app)
+            return
 
     if app.state == "menu":
         action = menu_key_pressed(app, key)
@@ -787,7 +846,11 @@ def start_next_arcade_stage(app):
         if app.arcade_speed > 80:
             app.arcade_speed -= 10
 
-    app.timer_delay = app.arcade_speed
+    app.base_timer_delay = app.arcade_speed
+    app.timer_delay = app.base_timer_delay
+
+    app.speed_up_held = False
+    app.slow_down_held = False
 
     app.score = 0
     app.goal += 3

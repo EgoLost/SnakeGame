@@ -1,4 +1,8 @@
 from uib_inf100_graphics.helpers import load_image, image_in_box
+from load_save import (
+    save_coins,
+    save_upgrades
+)
 
 unknown_icon = load_image("source/img/store/unknown.png")
 
@@ -44,6 +48,157 @@ coin = load_image("source/img/coin.png")
 coin_container = load_image("source/img/coin_container.png")
 shop_fon = load_image("source/img/shop_fon.png")
 
+store_icons = {
+    "speed_up": speed_up_icon,
+    "slow_down": slow_down_icon,
+    "extra_life": extra_life_icon,
+    "coin_chance": coin_chance_icon,
+    "meat": meat_icon,
+    "floor_selection": floor_selection_icon
+}
+
+
+def draw_purchase_window(app, canvas):
+    if app.pending_purchase is None:
+        return
+
+    scale = get_scale(app)
+
+    item = app.upgrades[app.pending_purchase]
+
+    name = item["name"]
+    price = item["price"]
+
+    width = 520 * scale
+    height = 280 * scale
+
+    x1 = app.width / 2 - width / 2
+    y1 = app.height / 2 - height / 2
+
+    x2 = app.width / 2 + width / 2
+    y2 = app.height / 2 + height / 2
+
+    # Затемнение
+    canvas.create_rectangle(
+        0,
+        0,
+        app.width,
+        app.height,
+        fill="#000000",
+        stipple="gray50"
+    )
+
+    # Само окно
+    canvas.create_rectangle(
+        x1,
+        y1,
+        x2,
+        y2,
+        fill="#1d2419",
+        outline="#d6af4b",
+        width=5
+    )
+
+    canvas.create_rectangle(
+        x1 + 8 * scale,
+        y1 + 8 * scale,
+        x2 - 8 * scale,
+        y2 - 8 * scale,
+        outline="#587044",
+        width=2
+    )
+
+    canvas.create_text(
+        app.width / 2,
+        y1 + 55 * scale,
+        text=name,
+        font=("Georgia", int(26 * scale), "bold"),
+        fill="#f1d58a"
+    )
+
+    canvas.create_text(
+        app.width / 2,
+        y1 + 105 * scale,
+        text=f"This upgrade costs {price} coins.",
+        font=("Georgia", int(18 * scale), "bold"),
+        fill="#e8c978"
+    )
+
+    canvas.create_text(
+        app.width / 2,
+        y1 + 140 * scale,
+        text="Are you sure you want to buy it?",
+        font=("Georgia", int(17 * scale)),
+        fill="#f1e4bd"
+    )
+
+    buttons = get_purchase_buttons(app)
+
+    yes = buttons["yes"]
+    no = buttons["no"]
+
+    canvas.create_rectangle(
+        yes["x1"],
+        yes["y1"],
+        yes["x2"],
+        yes["y2"],
+        fill="#2d4a2d",
+        outline="#d6af4b",
+        width=3
+    )
+
+    canvas.create_text(
+        (yes["x1"] + yes["x2"]) / 2,
+        (yes["y1"] + yes["y2"]) / 2,
+        text="BUY",
+        font=("Georgia", int(18 * scale), "bold"),
+        fill="#f1d58a"
+    )
+
+    canvas.create_rectangle(
+        no["x1"],
+        no["y1"],
+        no["x2"],
+        no["y2"],
+        fill="#4a2d25",
+        outline="#d6af4b",
+        width=3
+    )
+
+    canvas.create_text(
+        (no["x1"] + no["x2"]) / 2,
+        (no["y1"] + no["y2"]) / 2,
+        text="CANCEL",
+        font=("Georgia", int(18 * scale), "bold"),
+        fill="#f1d58a"
+    )
+
+def get_purchase_buttons(app):
+    scale = get_scale(app)
+
+    button_width = 150 * scale
+    button_height = 55 * scale
+    gap = 30 * scale
+
+    center_x = app.width / 2
+    y1 = app.height / 2 + 70 * scale
+    y2 = y1 + button_height
+
+    return {
+        "yes": {
+            "x1": center_x - gap / 2 - button_width,
+            "y1": y1,
+            "x2": center_x - gap / 2,
+            "y2": y2
+        },
+
+        "no": {
+            "x1": center_x + gap / 2,
+            "y1": y1,
+            "x2": center_x + gap / 2 + button_width,
+            "y2": y2
+        }
+    }
 
 def get_button_image(action):
     if action == "active":
@@ -692,12 +847,165 @@ def get_store_boxes(app):
     return boxes
 
 def store_mouse_moved(app, event):
+    # Информационное окно
+    if app.selected_upgrade is not None:
+        close_button = get_upgrade_info_button(app)
+
+        if is_inside_button(
+            event.x,
+            event.y,
+            close_button
+        ):
+            return "close_info"
+
+        return None
+
+    # Окно подтверждения покупки
+    if app.pending_purchase is not None:
+        return None
+
     back_button = get_back_button(app)
 
-    if is_inside_button(event.x, event.y, back_button):
+    if is_inside_button(
+        event.x,
+        event.y,
+        back_button
+    ):
         return "store_back"
 
+    boxes = get_store_boxes(app)
+
+    i = 0
+
+    for upgrade_key in app.upgrades:
+        box = boxes[i]
+
+        if is_inside_button(
+            event.x,
+            event.y,
+            box
+        ):
+            return "store_" + upgrade_key
+
+        i += 1
+
     return None
+
+def get_upgrade_info_button(app):
+    scale = get_scale(app)
+
+    width = 180 * scale
+    height = 55 * scale
+
+    x1 = app.width / 2 - width / 2
+    y1 = app.height / 2 + 75 * scale
+
+    return {
+        "x1": x1,
+        "y1": y1,
+        "x2": x1 + width,
+        "y2": y1 + height
+    }
+
+def draw_upgrade_info_window(app, canvas):
+    if app.selected_upgrade is None:
+        return
+
+    scale = get_scale(app)
+
+    item = app.upgrades[app.selected_upgrade]
+
+    name = item["name"]
+    description = item["description"]
+
+    width = 560 * scale
+    height = 300 * scale
+
+    x1 = app.width / 2 - width / 2
+    y1 = app.height / 2 - height / 2
+
+    x2 = app.width / 2 + width / 2
+    y2 = app.height / 2 + height / 2
+
+    # Затемнение экрана
+    canvas.create_rectangle(
+        0,
+        0,
+        app.width,
+        app.height,
+        fill="#000000",
+        stipple="gray50"
+    )
+
+    # Основное окно
+    canvas.create_rectangle(
+        x1,
+        y1,
+        x2,
+        y2,
+        fill="#1d2419",
+        outline="#d6af4b",
+        width=5
+    )
+
+    # Внутренняя рамка
+    canvas.create_rectangle(
+        x1 + 8 * scale,
+        y1 + 8 * scale,
+        x2 - 8 * scale,
+        y2 - 8 * scale,
+        outline="#587044",
+        width=2
+    )
+
+    # Название
+    canvas.create_text(
+        app.width / 2,
+        y1 + 55 * scale,
+        text=name,
+        font=("Georgia", int(27 * scale), "bold"),
+        fill="#f1d58a"
+    )
+
+    # Надпись OWNED
+    canvas.create_text(
+        app.width / 2,
+        y1 + 95 * scale,
+        text="OWNED",
+        font=("Georgia", int(16 * scale), "bold"),
+        fill="#62c76b"
+    )
+
+    # Описание
+    canvas.create_text(
+        app.width / 2,
+        y1 + 145 * scale,
+        text=description,
+        width=430 * scale,
+        font=("Georgia", int(18 * scale)),
+        fill="#f1e4bd",
+        justify="center"
+    )
+
+    button = get_upgrade_info_button(app)
+
+    canvas.create_rectangle(
+        button["x1"],
+        button["y1"],
+        button["x2"],
+        button["y2"],
+        fill="#2d4a2d",
+        outline="#d6af4b",
+        width=3
+    )
+
+    canvas.create_text(
+        (button["x1"] + button["x2"]) / 2,
+        (button["y1"] + button["y2"]) / 2,
+        text="CLOSE",
+        font=("Georgia", int(18 * scale), "bold"),
+        fill="#f1d58a"
+    )
 
 def draw_store(app, canvas):
     scale = get_scale(app)
@@ -774,7 +1082,7 @@ def draw_store(app, canvas):
         box = boxes[i]
 
         if item["bought"]:
-            image = load_image(item["image"])
+            image = store_icons[upgrade_key]
         else:
             image = unknown_icon
 
@@ -791,12 +1099,133 @@ def draw_store(app, canvas):
         i += 1
 
     draw_back_button(app, canvas)
+    draw_purchase_window(app, canvas)
+    draw_upgrade_info_window(app, canvas)
+
+def buy_upgrade(app, upgrade_key):
+    item = app.upgrades[upgrade_key]
+
+    if item["bought"]:
+        return
+
+    if app.coin < item["price"]:
+        return
+
+    app.coin -= item["price"]
+
+    item["bought"] = True
+
+    save_coins(app.coin)
+    save_upgrades(app.upgrades)
 
 def store_mouse_pressed(app, event):
+
+    # Окно информации о купленном улучшении
+    if app.selected_upgrade is not None:
+        button = get_upgrade_info_button(app)
+
+        if is_inside_button(
+            event.x,
+            event.y,
+            button
+        ):
+            app.selected_upgrade = None
+            return "close_info"
+
+        return None
+
+        # Окно подтверждения покупки
+    if app.pending_purchase is not None:
+        buttons = get_purchase_buttons(app)
+
+        if is_inside_button(
+            event.x,
+            event.y,
+            buttons["yes"]
+        ):
+            buy_upgrade(
+                app,
+                app.pending_purchase
+            )
+
+            app.pending_purchase = None
+            return "purchase"
+
+        if is_inside_button(
+            event.x,
+            event.y,
+            buttons["no"]
+        ):
+            app.pending_purchase = None
+            return "cancel"
+
+        return None
+
+    # Если уже открыто окно подтверждения покупки
+    if app.pending_purchase is not None:
+        buttons = get_purchase_buttons(app)
+
+        if is_inside_button(
+            event.x,
+            event.y,
+            buttons["yes"]
+        ):
+            buy_upgrade(
+                app,
+                app.pending_purchase
+            )
+
+            app.pending_purchase = None
+
+            return "purchase"
+
+        if is_inside_button(
+            event.x,
+            event.y,
+            buttons["no"]
+        ):
+            app.pending_purchase = None
+
+            return "cancel"
+
+        # Пока окно открыто, нельзя нажимать на магазин под ним
+        return None
+
+
+    # Back
     back_button = get_back_button(app)
 
-    if is_inside_button(event.x, event.y, back_button):
+    if is_inside_button(
+        event.x,
+        event.y,
+        back_button
+    ):
         return "back"
+
+
+    # Товары
+    boxes = get_store_boxes(app)
+
+    i = 0
+
+    for upgrade_key in app.upgrades:
+        box = boxes[i]
+        item = app.upgrades[upgrade_key]
+
+        if is_inside_button(
+            event.x,
+            event.y,
+            box
+        ):
+            # Если уже куплено, ничего не делаем
+            if item["bought"]:
+                app.selected_upgrade = upgrade_key
+                return "info"
+
+            app.pending_purchase = upgrade_key
+            return "confirm"
+
+        i += 1
 
     return None
 
